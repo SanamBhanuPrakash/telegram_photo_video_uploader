@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploaded Videos</title>
+</head>
+<body>
+    <h1>List of Uploaded Videos</h1>
+
+    {% if videos %}
+        <ul>
+        {% for video, data in videos.items() %}
+            <li>
+                <strong>{{ video }}</strong> ({{ data['size'] }} bytes, uploaded on {{ data['date_added'] }})
+                <a href="/download/{{ video }}">Download</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No videos have been uploaded yet.</p>
+    {% endif %}
+    
+    <br>
+    <a href="/">Go Back to Home</a>
+</body>
+</html>
