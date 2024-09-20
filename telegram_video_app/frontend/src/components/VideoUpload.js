@@ -1,68 +1,55 @@
+// src/components/VideoUpload.js
+
 import React, { useState } from 'react';
-import { Button, TextField, CircularProgress, Snackbar } from '@mui/material';
-import { useHistory } from 'react-router-dom';
+import { Button, Typography, Card, CardContent, Link } from '@mui/material';
 
 const VideoUpload = () => {
   const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [openSnackbar, setOpenSnackbar] = useState(false); // For success message
-  const history = useHistory(); // For redirection
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const file = e.target.files[0];
+    setFile(file);
+    localStorage.setItem('uploadedVideo', JSON.stringify({ name: file.name, size: file.size }));
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch('/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const data = await response.json();
-    setLoading(false);
-    if (response.ok) {
-      setOpenSnackbar(true); // Show success message
-      setTimeout(() => {
-        history.push('/videos'); // Redirect after success
-      }, 2000); // Redirect after 2 seconds
-    } else {
-      alert(`Error: ${data.error}`);
-    }
+  const handleUpload = () => {
+    alert("File uploaded successfully");
+    window.location.href = '/videos';
   };
 
   return (
-    <div>
-      <TextField
-        type="file"
-        onChange={handleFileChange}
-        label="Choose a video"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-      />
-      <Button
-        onClick={handleUpload}
-        variant="contained"
-        color="primary"
-        disabled={!file || loading}
-      >
-        Upload Video
-      </Button>
-      {loading && <CircularProgress />}
-
-      {/* Snackbar for showing success message */}
-      <Snackbar
-        open={openSnackbar}
-        message="Successfully uploaded"
-        autoHideDuration={2000}
-        onClose={() => setOpenSnackbar(false)}
-      />
+    <div style={{ maxWidth: '600px', margin: 'auto', textAlign: 'center', padding: '50px' }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h4" gutterBottom>
+            Welcome to the Video Upload App
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Select a video to upload:
+          </Typography>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleFileChange}
+            style={{ margin: '20px 0', padding: '10px' }}
+          />
+          <Typography variant="body1" color="textPrimary">
+            {file && file.name}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpload}
+            disabled={!file}
+          >
+            Upload Video
+          </Button>
+          <br />
+          <Link href="/videos" underline="hover">
+            View Uploaded Videos
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 };
