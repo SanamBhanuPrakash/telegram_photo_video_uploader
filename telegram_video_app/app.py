@@ -2,29 +2,48 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 import os, json, math
 from datetime import datetime
 from telegram import Bot
+import logging
 
+# Initialize Flask app
 app = Flask(__name__)
+
+# Configure app settings
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'mkv', 'avi', 'mov'}
 MAX_FILE_SIZE_MB = 2000  # Max file size for splitting in MB
-BOT_TOKEN = '8070122008:AAFE1EzRODhycdMHA3pes3usZmF8uDdqtLM'  # Replace with your bot token
-CHAT_ID = '1001645098763'  # Replace with your chat ID
+
+# Use environment variables for Telegram bot token and chat ID
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+CHAT_ID = os.getenv('CHAT_ID')
 bot = Bot(token=BOT_TOKEN)
 
+# File for metadata
 metadata_file = 'file_metadata.json'
 
-# Load or initialize metadata storage
-if os.path.exists(metadata_file):
+# Enable logging
+logging.basicConfig(level=logging.INFO)
+logging.info("Starting app with Telegram Bot Token and Chat ID")
+logging.info(f"BOT_TOKEN: {BOT_TOKEN}, CHAT_ID: {CHAT_ID}")
+
+# Ensure the metadata file is loaded or initialized
+if os.path.exists(metadata_file) and os.path.getsize(metadata_file) > 0:
     with open(metadata_file, 'r') as f:
-        file_metadata = json.load(f)
+        try:
+            file_metadata = json.load(f)
+        except json.JSONDecodeError:
+            file_metadata = {}  # Initialize to empty dictionary if JSON is invalid
 else:
     file_metadata = {}
+
+# Ensure upload folder exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Split large files into chunks
+# Split large video files into parts
 def split_file(filepath, filename):
     file_size = os.path.getsize(filepath)
     part_size = MAX_FILE_SIZE_MB * 1024 * 1024
@@ -39,17 +58,17 @@ def split_file(filepath, filename):
             part_files.append(part_filename)
     return part_files
 
-# Upload to Telegram
+# Upload file parts to Telegram
 def upload_to_telegram(filepath):
     with open(filepath, 'rb') as video_file:
         bot.send_video(chat_id=CHAT_ID, video=video_file, supports_streaming=True)
 
-# Main page
+# Main route
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# File upload route
+# Route for uploading files
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -81,21 +100,20 @@ def upload_file():
     else:
         return jsonify({"error": "Unsupported file format"}), 400
 
-# Search route
+# Route for searching uploaded videos
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('q').lower()
     results = {k: v for k, v in file_metadata.items() if query in k.lower()}
     return jsonify(results)
 
-# File download route
+# Route for downloading files
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     if filename in file_metadata:
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
 
+# Run app in debug mode for troubleshooting
 if __name__ == '__main__':
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
     app.run(debug=True)
