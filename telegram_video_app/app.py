@@ -11,7 +11,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'mkv', 'avi', 'mov'}
-MAX_FILE_SIZE_MB = 2000  # Max file size for splitting in MB
+MAX_FILE_SIZE_MB = 1900  # Max file size for splitting (slightly under 2GB limit of Telegram)
 
 # Set up environment variables for Telegram bot token and chat ID
 BOT_TOKEN = os.getenv('BOT_TOKEN')  # Fetch from environment
@@ -68,6 +68,16 @@ def upload_to_telegram(filepath):
         bot.send_video(chat_id=CHAT_ID, video=video_file, supports_streaming=True)
     logging.info(f"Upload to Telegram completed: {filepath}")
 
+# Recombine file parts into a single file
+def combine_file(parts, output_filename):
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+    with open(output_path, 'wb') as output_file:
+        for part in parts:
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], part), 'rb') as part_file:
+                output_file.write(part_file.read())
+    logging.info(f"Recombined file saved as: {output_filename}")
+    return output_path
+
 # Main route
 @app.route('/')
 def index():
@@ -115,11 +125,13 @@ def list_videos():
     logging.info("Listing all uploaded videos.")
     return render_template('videos.html', videos=file_metadata)
 
-# Route for downloading files
+# Route for downloading files (recombine the parts)
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     if filename in file_metadata:
         logging.info(f"Downloading file: {filename}")
+        parts = file_metadata[filename]['parts']
+        combined_filepath = combine_file(parts, filename)
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     logging.error(f"File not found: {filename}")
     return jsonify({"error": "File not found"}), 404
