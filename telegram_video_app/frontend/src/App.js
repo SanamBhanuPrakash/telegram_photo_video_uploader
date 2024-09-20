@@ -1,31 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import VideoUpload from './VideoUpload';
-import VideoList from './VideoList';
 
-function App() {
-  const [videos, setVideos] = useState([]);
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import VideoUpload from './components/VideoUpload';
+import UploadedVideos from './components/UploadedVideos';
 
-  // Fetch the videos from the backend when the app loads
-  useEffect(() => {
-    fetch('/get-videos')
-      .then(response => response.json())
-      .then(data => setVideos(data))
-      .catch(error => console.error('Error fetching videos:', error));
-  }, []);
-
+const App = () => {
   return (
-    <div>
-      <h1>Video Upload App</h1>
-      <VideoUpload onUpload={() => {
-        // Refetch videos after upload
-        fetch('/get-videos')
-          .then(response => response.json())
-          .then(data => setVideos(data))
-          .catch(error => console.error('Error fetching videos:', error));
-      }} />
-      <VideoList videos={videos} />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<VideoUpload />} />
+        <Route path="/videos" element={<UploadedVideos />} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
