@@ -100,12 +100,11 @@ def upload_file():
     else:
         return jsonify({"error": "Unsupported file format"}), 400
 
-# Route for searching uploaded videos
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('q').lower()
-    results = {k: v for k, v in file_metadata.items() if query in k.lower()}
-    return jsonify(results)
+# Route for listing uploaded videos
+@app.route('/videos', methods=['GET'])
+def list_videos():
+    # Get the list of uploaded videos from the file_metadata.json
+    return render_template('videos.html', videos=file_metadata)
 
 # Route for downloading files
 @app.route('/download/<filename>', methods=['GET'])
@@ -114,12 +113,6 @@ def download_file(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
 
-# Error handler for 500 internal server error
-@app.errorhandler(500)
-def internal_error(error):
-    return "500 error: Internal Server Error", 500
-
-# Run app in debug mode and bind to the correct port for Railway
+# Run app in debug mode for troubleshooting
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))  # Get the port from the environment variable, default to 8080
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
