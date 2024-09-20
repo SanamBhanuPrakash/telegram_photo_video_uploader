@@ -44,21 +44,31 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Split large video files into parts
+# Updated: Split large video files into parts (with memory optimization)
 def split_file(filepath, filename):
     logging.info(f"Splitting file: {filename}")
-    file_size = os.path.getsize(filepath)
-    part_size = MAX_FILE_SIZE_MB * 1024 * 1024
-    num_parts = math.ceil(file_size / part_size)
-
+    part_size = MAX_FILE_SIZE_MB * 1024 * 1024  # Set the part size limit
     part_files = []
+    
+    # Open the original file and read in chunks
     with open(filepath, 'rb') as f:
-        for i in range(num_parts):
-            part_filename = f'{filename}.part{i+1}'
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], part_filename), 'wb') as part:
-                part.write(f.read(part_size))
-            part_files.append(part_filename)
-    logging.info(f"File split into {num_parts} parts.")
+        i = 0
+        while True:
+            chunk = f.read(part_size)  # Read file in chunks of part_size bytes
+            if not chunk:
+                break  # Stop if no more data to read
+            
+            part_filename = f'{filename}.part{i+1}'  # Name each part
+            part_filepath = os.path.join(app.config['UPLOAD_FOLDER'], part_filename)
+            
+            # Write each chunk to a new part file
+            with open(part_filepath, 'wb') as part:
+                part.write(chunk)
+            
+            part_files.append(part_filename)  # Keep track of all part files
+            i += 1
+
+    logging.info(f"File split into {len(part_files)} parts.")
     return part_files
 
 # Upload file parts to Telegram
