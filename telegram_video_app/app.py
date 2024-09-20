@@ -114,6 +114,11 @@ def download_file(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
 
+# Error handler for 500 internal server error
+@app.errorhandler(500)
+def internal_error(error):
+    return "500 error: Internal Server Error", 500
+
 # Run app in debug mode and bind to the correct port for Railway
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))  # Get the port from the environment variable, default to 8080
