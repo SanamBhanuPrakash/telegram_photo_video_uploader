@@ -6,19 +6,7 @@
     <title>Video Upload App</title>
 </head>
 <body>
-    <h1>Welcome to the Video Upload App</h1>
-    <p>This is the main page served by Flask.</p>
-
-    <!-- Video Upload Form -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <label for="file">Select a video to upload:</label>
-        <input type="file" id="file" name="file" accept="video/*" required>
-        <br><br>
-        <button type="submit">Upload Video</button>
-    </form>
-
-    <br>
-    <!-- Link to view uploaded videos -->
-    <a href="/videos">View Uploaded Videos</a>
+    <div id="root"></div>
+    <script src="../frontend/build/static/js/main.js"></script>  <!-- Adjust if necessary -->
 </body>
 </html>
