@@ -40,7 +40,6 @@ else:
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# Helper function to check if the file format is allowed
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
@@ -64,12 +63,12 @@ def upload_to_telegram(filepath):
     with open(filepath, 'rb') as video_file:
         bot.send_video(chat_id=CHAT_ID, video=video_file, supports_streaming=True)
 
-# Main route for the homepage
+# Main route
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# API route to upload videos
+# Route for uploading files
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -97,32 +96,15 @@ def upload_file():
         with open(metadata_file, 'w') as f:
             json.dump(file_metadata, f)
 
-        # Return success message and video metadata to the frontend
         return jsonify({"message": "File uploaded successfully", "filename": filename}), 201
     else:
         return jsonify({"error": "Unsupported file format"}), 400
 
-# API route to get uploaded videos
-@app.route('/get-videos', methods=['GET'])
-def get_videos():
-    videos = []
-    for filename, metadata in file_metadata.items():
-        videos.append({
-            "name": filename,
-            "url": f"/uploads/{filename}"
-        })
-    return jsonify(videos)
-
-# Route to list videos on videos.html
+# Route for listing uploaded videos
 @app.route('/videos', methods=['GET'])
 def list_videos():
     # Get the list of uploaded videos from the file_metadata.json
     return render_template('videos.html', videos=file_metadata)
-
-# Serve uploaded files
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Route for downloading files
 @app.route('/download/<filename>', methods=['GET'])
