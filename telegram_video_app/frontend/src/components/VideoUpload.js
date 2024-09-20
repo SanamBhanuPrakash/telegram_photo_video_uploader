@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Button, TextField, CircularProgress } from '@mui/material';
+import { Button, TextField, CircularProgress, Snackbar } from '@mui/material';
+import { useHistory } from 'react-router-dom';
 
 const VideoUpload = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false); // For success message
+  const history = useHistory(); // For redirection
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -24,7 +27,10 @@ const VideoUpload = () => {
     const data = await response.json();
     setLoading(false);
     if (response.ok) {
-      alert(`File uploaded: ${data.filename}`);
+      setOpenSnackbar(true); // Show success message
+      setTimeout(() => {
+        history.push('/videos'); // Redirect after success
+      }, 2000); // Redirect after 2 seconds
     } else {
       alert(`Error: ${data.error}`);
     }
@@ -49,6 +55,14 @@ const VideoUpload = () => {
         Upload Video
       </Button>
       {loading && <CircularProgress />}
+
+      {/* Snackbar for showing success message */}
+      <Snackbar
+        open={openSnackbar}
+        message="Successfully uploaded"
+        autoHideDuration={2000}
+        onClose={() => setOpenSnackbar(false)}
+      />
     </div>
   );
 };
